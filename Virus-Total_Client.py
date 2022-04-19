@@ -80,7 +80,7 @@ def TimeCsvInput(input_csv: str) -> tuple:
 
         # Iterate through items in data row #
         for row in csv_data:
-            # If empty row or the first row (title)#
+            # If empty row or the first row (title) #
             if not row or title_row:
                 if title_row:
                     title_row = False
@@ -100,15 +100,15 @@ def TimeCsvInput(input_csv: str) -> tuple:
 
                 count += 1
 
-            try:
-                # Ensure input CSV data is int #
-                ret_month, ret_day, ret_hour = int(month), int(day), int(hour)
-            # If value is not int #
-            except ValueError:
-                PrintErr('Data Type: Error occurred retrieving CSV execution time values')
-                sys.exit(4)
+    try:
+        # Ensure input CSV data is int #
+        ret_month, ret_day, ret_hour = int(month), int(day), int(hour)
+    # If value is not int #
+    except ValueError as err:
+        PrintErr(f'Value: Error occurred retrieving CSV execution time values - {err}')
+        sys.exit(4)
 
-            return ret_month, ret_day, ret_hour
+    return ret_month, ret_day, ret_hour
 
 
 """
@@ -165,7 +165,7 @@ def main():
         total_count = 0
     # If the data file exists #
     else:
-        # If the data file does not have access #
+        # If the data file does not have read access #
         if not os.access(counter_file, os.R_OK):
             PrintErr(f'File IO: {counter_file} does not have read'
                      ' access, confirm it is closed and try again')

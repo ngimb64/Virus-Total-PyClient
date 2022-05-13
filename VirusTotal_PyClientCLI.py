@@ -1,11 +1,9 @@
 """ The Virus-Total Public API is limited to 500 requests per day and a rate of 4 requests per minute """
 
 # Built-in modules #
-import csv
 import hashlib
 import json
 import os
-import pickle
 import sys
 import time
 from datetime import datetime
@@ -14,130 +12,12 @@ from datetime import datetime
 from virus_total_apis import ApiError
 from virus_total_apis import PublicApi as VirusTotalPublicApi
 
+# Custom modules #
+from Modules.Utils import CounterDataInput, CounterDataOutput, PrintErr, TimeCsvInput, TimeCsvOutput
 
-# Global variables #
-API_KEY = '<Add your API key here>'
-INPUT_DIR = 'scanFiles'
-
-
-"""
-########################################################################################################################
-Name:       TimeCsvOutput
-Purpose:    Stores execution time and data in cvs file.
-Parameters: The data file to store output.
-Returns:    None
-########################################################################################################################
-"""
-def TimeCsvOutput(output_csv: str):
-    # CSV field names #
-    fields = ['Month', 'Day', 'Hour']
-    # Get the current time #
-    finish_time = datetime.now()
-    # Store time in dict #
-    time_dict = {'Month': finish_time.month, 'Day': finish_time.day, 'Hour': finish_time.hour}
-
-    # Write the current hour and minute to time CSV file #
-    with open(output_csv, 'w') as out_file:
-        # Create CSV dict writer object #
-        csv_writer = csv.DictWriter(out_file, fieldnames=fields)
-        # Write headers (fieldnames) #
-        csv_writer.writeheader()
-        # Populate the data in fields #
-        csv_writer.writerow(time_dict)
-
-
-"""
-########################################################################################################################
-Name:       CounterDataOutput
-Purpose:    Stores total number of API queries in data file.
-Parameters: The data file to store output and the current daily total.
-Returns:    None
-########################################################################################################################
-"""
-def CounterDataOutput(output_file: str, day_count: int):
-    # Write to counter data file in bytes mode #
-    with open(output_file, 'wb') as out_file:
-        # Save API int counter to data file #
-        pickle.dump(day_count, out_file)
-
-
-"""
-########################################################################################################################
-Name:       TimeCsvInput
-Purpose:    Reads the time data stored in CSV file.
-Parameters: The data file to read the stored data.
-Returns:    The data read from the CSV file (Month, Day, Hour).
-########################################################################################################################
-"""
-def TimeCsvInput(input_csv: str) -> tuple:
-    title_row = True
-    count = 0
-
-    # Read the file storing last execution time #
-    with open(input_csv, 'r') as in_file:
-        # Read the last execution data #
-        csv_data = csv.reader(in_file)
-
-        # Iterate through items in data row #
-        for row in csv_data:
-            # If empty row or the first row (title) #
-            if not row or title_row:
-                if title_row:
-                    title_row = False
-
-                continue
-
-            # Iterate through CSV row #
-            for item in row:
-                if count == 0:
-                    month = item
-                elif count == 1:
-                    day = item
-                elif count == 2:
-                    hour = item
-                else:
-                    break
-
-                count += 1
-
-    try:
-        # Ensure input CSV data is int #
-        ret_month, ret_day, ret_hour = int(month), int(day), int(hour)
-    # If value is not int #
-    except ValueError as err:
-        PrintErr(f'Value: Error occurred retrieving CSV execution time values - {err}')
-        sys.exit(4)
-
-    return ret_month, ret_day, ret_hour
-
-
-"""
-########################################################################################################################
-Name:       CounterDataInput
-Purpose:    Reads total number of API queries from data file.
-Parameters: The data file to read the stored data.
-Returns:    The data read from the data file (Daily API query count).
-########################################################################################################################
-"""
-def CounterDataInput(input_file: str) -> int:
-    # Read from counter data file in bytes mode #
-    with open(input_file, 'rb') as in_file:
-        # Load the int API counter #
-        stored_counter = pickle.load(in_file)
-
-    return stored_counter
-
-
-"""
-########################################################################################################################
-Name:       PrintErr
-Purpose:    Displays error message through standard output.
-Parameters: Error message to be displayed.
-Returns:    None
-########################################################################################################################
-"""
-def PrintErr(msg: str):
-    print(f'\n* [ERROR] {msg} *\n', file=sys.stderr)
+# Pseudo constants #
+API_KEY = '< Add your API key here >'
+INPUT_DIR = 'VTotalScanDock'
 
 
 """
@@ -158,7 +38,7 @@ def main():
     if os.path.isfile(report_file) and not os.access(report_file, os.W_OK):
         PrintErr(f'File IO: {report_file} exists and does not have write'
                  ' access, confirm it is closed and try again')
-        sys.exit(1)
+        sys.exit(6)
 
     # If the counter data file does not exist #
     if not os.path.isfile(counter_file):
@@ -169,7 +49,7 @@ def main():
         if not os.access(counter_file, os.R_OK):
             PrintErr(f'File IO: {counter_file} does not have read'
                      ' access, confirm it is closed and try again')
-            sys.exit(2)
+            sys.exit(7)
 
         # Load the counter data from the data file #
         total_count = CounterDataInput(counter_file)
@@ -184,7 +64,7 @@ def main():
         if not os.access(execution_time_file, os.R_OK) or not os.access(execution_time_file, os.W_OK):
             PrintErr(f'File IO: {execution_time_file} exists and does not have read/write'
                      ' access, confirm it is closed and try again')
-            sys.exit(3)
+            sys.exit(8)
 
         # Read old execution time from csv file #
         old_month, old_day, old_hour = TimeCsvInput(execution_time_file)
@@ -216,6 +96,10 @@ def main():
             # Get the contents of input dir as list #
             for _, _, files in os.walk(INPUT_DIR):
                 for file in files:
+                    # Skip the .keep file #
+                    if file.startswith('.'):
+                        continue
+
                     # If the maximum API calls have been used for the day #
                     if total_count == 500:
                         print('Only 500 queries allowed per day .. exiting program')
@@ -223,7 +107,7 @@ def main():
 
                     # If the maximum API calls have been used for the minute #
                     if minute_count == 0:
-                        print('Only 4 queries allowed per minute, sleeping 60 seconds')
+                        print('Only 4 queries allowed per minute, sleeping 60 seconds\n')
                         time.sleep(60)
                         minute_count = 4
 
@@ -231,14 +115,14 @@ def main():
                     bytes_item = file.encode()
 
                     # Generate MD5 hash of current file in list #
-                    file_md5 = hashlib.md5(bytes_item).hexdigest()
+                    file_md5 = hashlib.sha256(bytes_item).hexdigest()
                     try:
                         # Get a Virus-Total report of the hashed file #
                         response = vt_object.get_file_report(file_md5)
                     # If error occurs interacting with Virus-Total API #
                     except ApiError as err:
                         PrintErr(f'API error occurred - {err}')
-                        sys.exit(5)
+                        sys.exit(9)
 
                     # If successful response code is returned #
                     if response['response_code'] == 200:
@@ -251,22 +135,22 @@ def main():
                     # If response code is for maximum API calls per minute #
                     elif response['response_code'] == 204:
                         PrintErr('Max API Error: API calls per minute maxed out at 4, wait 60 seconds and try again')
-                        sys.exit(6)
+                        sys.exit(10)
 
                     # If response code is for invalid request #
                     elif response['response_code'] == 400:
                         PrintErr('Request Error: Invalid API request detected, check request formatting')
-                        sys.exit(7)
+                        sys.exit(11)
 
                     # If response code is for forbidden access #
                     elif response['response_code'] == 403:
                         PrintErr('Forbidden Error: Unable to access API, confirm key exists and is valid')
-                        sys.exit(8)
+                        sys.exit(12)
 
                     # If unknown response code occurs #
                     else:
                         PrintErr('Unknown response code occurred')
-                        sys.exit(9)
+                        sys.exit(13)
 
                     total_count += 1
                     minute_count -= 1
@@ -276,9 +160,9 @@ def main():
         pass
 
     # If error occurs writing to report output file #
-    except (IOError, OSError) as err:
+    except IOError as err:
         PrintErr(f'File IO: Error occurred writing to {report_file} - {err}')
-        sys.exit(10)
+        sys.exit(14)
 
     # Save daily allowed total counter to data file #
     CounterDataOutput(counter_file, total_count)
@@ -297,8 +181,14 @@ def main():
         # Save the execution time to csv #
         TimeCsvOutput(execution_time_file)
 
-    sys.exit(0)
-
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+
+    # If unexpected exception occurs #
+    except Exception as e:
+        PrintErr(f'Unexpected error occurred - {e}')
+        sys.exit(1)
+
+    sys.exit(0)

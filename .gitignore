@@ -1,4 +1,11 @@
-scanFiles/*
-!scanFiles/.keep
+VTotalScanDock/*
+!VTotalScanDock/.keep
 
 .idea/
+
+*.txt
+*.csv
+*.data
+*.log
+
+Modules/__pycache__/

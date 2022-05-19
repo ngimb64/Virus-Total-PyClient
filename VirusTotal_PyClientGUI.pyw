@@ -15,7 +15,7 @@ from Modules.VTotal_Scanner import VTotalScan
 
 
 # Pseudo constants #
-API_KEY = '1ffd1ded4a3a59d2fad391427e43c33310eb1de44f8fccfd10406195ae8d028f'
+API_KEY = '< Add API key here'
 INPUT_DIR = 'VTotalScanDock'
 
 # Global variables #
@@ -72,7 +72,7 @@ class MainWindow(Qtw.QMainWindow):
         self.counter_label.setAlignment(Qt.AlignCenter)
         # Set label css border #
         self.counter_label.setStyleSheet('border: 2px solid #000000;'
-                                             'border-radius: 10px;')
+                                         'border-radius: 10px;')
 
         # Create scan output box #
         self.output_box = Qtw.QLabel('', self)
@@ -86,7 +86,7 @@ class MainWindow(Qtw.QMainWindow):
         self.output_box.setAlignment(Qt.AlignLeft)
         # Set output box css border #
         self.output_box.setStyleSheet('border: 2px solid #000000;'
-                                             'border-radius: 10px;')
+                                      'border-radius: 10px;')
 
         # Create button to execute tests #
         self.scan_button = Qtw.QPushButton('Run Scan', self)
@@ -114,6 +114,11 @@ class MainWindow(Qtw.QMainWindow):
 
         # Pass needed params into virus scanner, get the updated daily API call total in return #
         total_count = VTotalScan(API_KEY, INPUT_DIR, self.out_file, self.api_count, self.output_box)
+
+        # Update daily API counter #
+        self.counter_label.setText(f'# of daily API calls\n{total_count}')
+        # Call app to process counter text change #
+        Qtg.QGuiApplication.processEvents()
 
         print(self.instruction_label.setText('Scan is complete .. check directory for report'))
 

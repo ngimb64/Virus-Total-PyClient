@@ -15,14 +15,14 @@ from Modules.VTotal_Scanner import VTotalScan
 
 
 # Pseudo constants #
-API_KEY = '< Add API key here >'
+API_KEY = '1ffd1ded4a3a59d2fad391427e43c33310eb1de44f8fccfd10406195ae8d028f'
 INPUT_DIR = 'VTotalScanDock'
 
 # Global variables #
 global total_count
 
 
-class MainWindow(Qtw.QWidget):
+class MainWindow(Qtw.QMainWindow):
     """ Purpose:  Initialize and configure the graphical user interface. """
     """ Parameters:  The main window object of the GUI. """
     """ Returns:  Nothing """
@@ -30,52 +30,90 @@ class MainWindow(Qtw.QWidget):
         # Set class to inherit attributes of parent class #
         super().__init__()
 
+        # Set the title of the application #
+        self.setWindowTitle('VTotal PyClient')
+
         # Set the window size #
-        self.resize(800, 600)
+        self.setGeometry(0, 0, 800, 600)
 
         # Total number of daily API calls #
-        self._api_count = daily_calls
+        self.api_count = daily_calls
         # Save the output file name #
         self.out_file = result_file
 
-        # Create a label #
+        # Create a label for instructions #
         self.instruction_label = Qtw.QLabel('Click button below to run Virus Total API'
-                                            ' scan on VTotalScanDock contents')
+                                            ' scan on VTotalScanDock contents', self)
+        # Position and set label size #
+        self.instruction_label.move(0, 0)
+        self.instruction_label.resize(700, 100)
+
+        # Set label to word wrap #
+        self.instruction_label.setWordWrap(True)
         # Change label font size #
         self.instruction_label.setFont(Qtg.QFont('Arial', 18))
         # Align label center #
         self.instruction_label.setAlignment(Qt.AlignCenter)
+        # Set label css border #
+        self.instruction_label.setStyleSheet('border: 2px solid #000000;'
+                                             'border-radius: 10px;')
+
+        # Create label to display current api counter #
+        self.counter_label = Qtw.QLabel(f'# of daily API calls\n{self.api_count}', self)
+        # Position and set label size #
+        self.counter_label.move(700, 0)
+        self.counter_label.resize(100, 100)
+
+        # Set label to word wrap #
+        self.counter_label.setWordWrap(True)
+        # Change label font size #
+        self.counter_label.setFont(Qtg.QFont('Arial', 14))
+        # Align label center #
+        self.counter_label.setAlignment(Qt.AlignCenter)
+        # Set label css border #
+        self.counter_label.setStyleSheet('border: 2px solid #000000;'
+                                             'border-radius: 10px;')
+
+        # Create scan output box #
+        self.output_box = Qtw.QLabel('', self)
+        # Position and set output box size #
+        self.output_box.move(0, 150)
+        self.output_box.resize(800, 350)
+
+        # Change label font size #
+        self.output_box.setFont(Qtg.QFont('Arial', 16))
+        # Align label left #
+        self.output_box.setAlignment(Qt.AlignLeft)
+        # Set output box css border #
+        self.output_box.setStyleSheet('border: 2px solid #000000;'
+                                             'border-radius: 10px;')
 
         # Create button to execute tests #
-        self.scan_button = Qtw.QPushButton('Run Scan')
+        self.scan_button = Qtw.QPushButton('Run Scan', self)
+        # Position and set button size #
+        self.scan_button.move(0, 500)
+        self.scan_button.resize(800, 100)
         # Change button font size #
         self.scan_button.setFont(Qtg.QFont('Arial', 18))
         # Set function to execute when pressed #
         self.scan_button.clicked.connect(self.OnPress)
 
-        # Set the title of the application #
-        self.setWindowTitle('VTotal PyClient')
-        # Set a vertical-based app layout #
-        self.setLayout(Qtw.QVBoxLayout())
-
-        # Apply label to app #
-        self.layout().addWidget(self.instruction_label)
-        # Apply button to app #
-        self.layout().addWidget(self.scan_button)
+        # Display the app #
+        self.show()
 
     def OnPress(self):
         """ Purpose:  Executes Virus Total scanner function when button is clicked """
         """ Parameters:  Nothing """
         """ Returns:  Nothing """
         global total_count
-        print(self.instruction_label.setText('Scan is running .. 4 items are scanned every 60 seconds based on\nAPI'
-                                             ' limitations. This operation could take some time depending on the\n'
+        print(self.instruction_label.setText('Scan is running .. 4 items are scanned every 60 seconds based on API'
+                                             ' limitations. This operation could take some time depending on the'
                                              'the amount of files in the VTotalScanDock'))
         # Call app to process label text change #
         Qtg.QGuiApplication.processEvents()
 
         # Pass needed params into virus scanner, get the updated daily API call total in return #
-        total_count = VTotalScan(API_KEY, INPUT_DIR, self.out_file, self._api_count)
+        total_count = VTotalScan(API_KEY, INPUT_DIR, self.out_file, self.api_count, self.output_box)
 
         print(self.instruction_label.setText('Scan is complete .. check directory for report'))
 
@@ -146,11 +184,9 @@ def main():
     logging.info(f'Count before app {total_count}\n')
 
     # Initialize QApplication class #
-    app = Qtw.QApplication([])
+    app = Qtw.QApplication(sys.argv)
     # Configure the main window UI for app #
-    widget = MainWindow(report_file, total_count)
-    # Display the app #
-    widget.show()
+    _ = MainWindow(report_file, total_count)
 
     # Exit application process when closed #
     try:

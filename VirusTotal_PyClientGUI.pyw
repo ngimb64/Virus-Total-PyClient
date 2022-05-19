@@ -15,7 +15,7 @@ from Modules.VTotal_Scanner import VTotalScan
 
 
 # Pseudo constants #
-API_KEY = '< Add API key here'
+API_KEY = '< Add your API key here >'
 INPUT_DIR = 'VTotalScanDock'
 
 # Global variables #

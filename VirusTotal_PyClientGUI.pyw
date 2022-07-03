@@ -10,7 +10,7 @@ import PyQt5.QtWidgets as Qtw
 import PyQt5.QtGui as Qtg
 
 # Custom modules #
-from Modules.Utils import CounterDataInput, CounterDataOutput, TimeCsvInput, TimeCsvOutput
+from Modules.Utils import CounterDataInput, CounterDataOutput, QtError, TimeCsvInput, TimeCsvOutput
 from Modules.VTotal_Scanner import VTotalScan
 
 
@@ -29,6 +29,8 @@ class MainWindow(Qtw.QMainWindow):
     def __init__(self, result_file: str, daily_calls: int):
         # Set class to inherit attributes of parent class #
         super().__init__()
+
+        self.setStyleSheet('background-color: #1eb300;')
 
         # Set the title of the application #
         self.setWindowTitle('VTotal PyClient')
@@ -55,8 +57,12 @@ class MainWindow(Qtw.QMainWindow):
         # Align label center #
         self.instruction_label.setAlignment(Qt.AlignCenter)
         # Set label css border #
-        self.instruction_label.setStyleSheet('border: 2px solid #000000;'
-                                             'border-radius: 10px;')
+        self.instruction_label.setStyleSheet('''
+                                               color: #1eb300;
+                                               background-color: #000000;
+                                               border: 2px solid #1eb300;
+                                               border-radius: 10px;
+                                             ''')
 
         # Create label to display current api counter #
         self.counter_label = Qtw.QLabel(f'# of daily API calls\n{self.api_count}', self)
@@ -71,32 +77,55 @@ class MainWindow(Qtw.QMainWindow):
         # Align label center #
         self.counter_label.setAlignment(Qt.AlignCenter)
         # Set label css border #
-        self.counter_label.setStyleSheet('border: 2px solid #000000;'
-                                         'border-radius: 10px;')
+        self.counter_label.setStyleSheet('''
+                                           border: 2px solid #000000;
+                                           border-radius: 10px;
+                                         ''')
 
         # Create scan output box #
-        self.output_box = Qtw.QLabel('', self)
+        self.output_box = Qtw.QTextEdit('', self)
+        # Set the console output screen to read-only #
+        self.output_box.setReadOnly(True)
         # Position and set output box size #
         self.output_box.move(0, 150)
-        self.output_box.resize(800, 350)
+        self.output_box.resize(800, 349)
 
         # Change label font size #
         self.output_box.setFont(Qtg.QFont('Arial', 16))
         # Align label left #
         self.output_box.setAlignment(Qt.AlignLeft)
         # Set output box css border #
-        self.output_box.setStyleSheet('border: 2px solid #000000;'
-                                      'border-radius: 10px;')
+        self.output_box.setStyleSheet('''
+                                        background-color: #ffffff;
+                                        border: 2px solid #000000;
+                                        border-radius: 10px;
+                                      ''')
 
         # Create button to execute tests #
         self.scan_button = Qtw.QPushButton('Run Scan', self)
         # Position and set button size #
-        self.scan_button.move(0, 500)
+        self.scan_button.move(0, 501)
         self.scan_button.resize(800, 100)
         # Change button font size #
         self.scan_button.setFont(Qtg.QFont('Arial', 18))
         # Set function to execute when pressed #
         self.scan_button.clicked.connect(self.OnPress)
+        # Set button css #
+        self.scan_button.setStyleSheet('''
+                                        QPushButton {
+                                            color: #000000;
+                                            background-color: #1eb300;
+                                            border: 2px solid #000000;
+                                            border-radius: 10px;
+                                        }
+            
+                                        QPushButton:hover {
+                                            color: #1eb300;
+                                            background-color: #000000;
+                                            border: 2px solid #1eb300;
+                                            border-radius: 10px;
+                                        }
+                                        ''')
 
         # Display the app #
         self.show()
@@ -136,6 +165,9 @@ def main():
     report_file = 'virus-total_report.txt'
     counter_file = 'counter_data.data'
     execution_time_file = 'last_execution_time.csv'
+
+    # Confirm application is scaled to screen resolution #
+    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
     # If report file exists but does not have written access #
     if os.path.isfile(report_file) and not os.access(report_file, os.W_OK):
@@ -228,6 +260,7 @@ if __name__ == "__main__":
 
     # If unknown exception occurs #
     except Exception as err:
+        QtError(err)
         logging.exception(f'Unexpected error occurred:  {err}\n\n')
         sys.exit(1)
 

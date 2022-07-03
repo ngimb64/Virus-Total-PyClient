@@ -12,7 +12,7 @@ from virus_total_apis import ApiError
 from virus_total_apis import PublicApi as VirusTotalPublicApi
 
 # Custom modules #
-from Modules.Utils import ErrorQuery
+from Modules.Utils import ErrorQuery, QtError
 
 
 """
@@ -73,6 +73,7 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
                         response = vt_object.get_file_report(file_md5)
                     # If error occurs interacting with Virus-Total API #
                     except ApiError as err:
+                        QtError(err)
                         logging.exception(f'API error occurred - {err}\n\n')
                         sys.exit(5)
 
@@ -86,22 +87,27 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
 
                     # If response code is for maximum API calls per minute #
                     elif response['response_code'] == 204:
+                        QtError('Max API Error: API calls per minute maxed out at 4,'
+                                ' wait 60 seconds and try again')
                         logging.exception('Max API Error: API calls per minute maxed out at 4,'
                                           ' wait 60 seconds and try again\n\n')
                         sys.exit(6)
 
                     # If response code is for invalid request #
                     elif response['response_code'] == 400:
+                        QtError('Request Error: Invalid API request detected, check request formatting')
                         logging.exception('Request Error: Invalid API request detected, check request formatting\n\n')
                         sys.exit(7)
 
                     # If response code is for forbidden access #
                     elif response['response_code'] == 403:
+                        QtError('Forbidden Error: Unable to access API, confirm key exists and is valid')
                         logging.exception('Forbidden Error: Unable to access API, confirm key exists and is valid\n\n')
                         sys.exit(8)
 
                     # If unknown response code occurs #
                     else:
+                        QtError('Unknown response code occurred')
                         logging.exception('Unknown response code occurred\n\n')
                         sys.exit(9)
 
@@ -110,6 +116,7 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
 
     # If error occurs writing to report output file #
     except IOError as err:
+        QtError(err)
         # Lookup, display, and log IO error #
         ErrorQuery(out_file, 'a', err)
 

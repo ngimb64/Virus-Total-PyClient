@@ -6,6 +6,8 @@ import pickle
 import sys
 from datetime import datetime
 
+# External Modules #
+import PyQt5.QtWidgets as Qtw
 
 """
 ########################################################################################################################
@@ -93,6 +95,23 @@ Returns:    None
 """
 def PrintErr(msg: str):
     print(f'\n* [ERROR] {msg} *\n', file=sys.stderr)
+
+
+"""
+########################################################################################################################
+Name:       QtError
+Purpose:    Prints a GUI error message with PyQT.
+Parameters: Error message object.
+Returns:    
+########################################################################################################################
+"""
+def QtError(err_obj: object):
+    msg = Qtw.QMessageBox()
+    msg.setIcon(Qtw.QMessageBox.Critical)
+    msg.setText("* [ERROR] *")
+    msg.setInformativeText(err_obj)
+    msg.setWindowTitle("Error")
+    msg.exec_()
 
 
 """

@@ -4,6 +4,7 @@ VTotalScanDock/*
 .idea/
 
 *.txt
+!packages.txt
 *.csv
 *.data
 *.log

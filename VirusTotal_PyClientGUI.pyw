@@ -10,12 +10,12 @@ import PyQt5.QtWidgets as Qtw
 import PyQt5.QtGui as Qtg
 
 # Custom modules #
-from Modules.Utils import CounterDataInput, CounterDataOutput, QtError, TimeCsvInput, TimeCsvOutput
+from Modules.Utils import LoadProgramData, QtError, StoreProgramData
 from Modules.VTotal_Scanner import VTotalScan
 
 
 # Pseudo constants #
-API_KEY = '< Add your API key here >'
+API_KEY = '< Add API key here >'
 INPUT_DIR = 'VTotalScanDock'
 
 # Global variables #
@@ -88,7 +88,7 @@ class MainWindow(Qtw.QMainWindow):
         self.output_box.setReadOnly(True)
         # Position and set output box size #
         self.output_box.move(0, 150)
-        self.output_box.resize(800, 349)
+        self.output_box.resize(800, 350)
 
         # Change label font size #
         self.output_box.setFont(Qtg.QFont('Arial', 16))
@@ -104,7 +104,7 @@ class MainWindow(Qtw.QMainWindow):
         # Create button to execute tests #
         self.scan_button = Qtw.QPushButton('Run Scan', self)
         # Position and set button size #
-        self.scan_button.move(0, 501)
+        self.scan_button.move(0, 500)
         self.scan_button.resize(800, 100)
         # Change button font size #
         self.scan_button.setFont(Qtg.QFont('Arial', 18))
@@ -167,56 +167,14 @@ def main():
     execution_time_file = 'last_execution_time.csv'
 
     # Confirm application is scaled to screen resolution #
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-
-    # If report file exists but does not have written access #
-    if os.path.isfile(report_file) and not os.access(report_file, os.W_OK):
-        logging.exception(f'File IO: {report_file} exists and does not have write'
-                           ' access, confirm it is closed and try again')
-        sys.exit(6)
-
-    # If the counter data file does not exist #
-    if not os.path.isfile(counter_file):
-        total_count = 0
-    # If the data file exists #
-    else:
-        # If the data file does not have read access #
-        if not os.access(counter_file, os.R_OK):
-            logging.exception(f'File IO: {counter_file} does not have read'
-                               ' access, confirm it is closed and try again')
-            sys.exit(7)
-
-        # Load the counter data from the data file #
-        total_count = CounterDataInput(counter_file)
+    os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '1'
 
     # Get the current execution time #
     start_time = datetime.now()
     month, day, hour = start_time.month, start_time.day, start_time.hour
 
-    # If the last execution time file exists #
-    if os.path.isfile(execution_time_file):
-        # If the last execution time file does not have read/write access #
-        if not os.access(execution_time_file, os.R_OK) or not os.access(execution_time_file, os.W_OK):
-            logging.exception(f'File IO: {execution_time_file} exists and does not have read/write'
-                               ' access, confirm it is closed and try again')
-            sys.exit(8)
-
-        # Read old execution time from csv file #
-        old_month, old_day, old_hour = TimeCsvInput(execution_time_file)
-
-        # If the last execution occurred in the same month and
-        # maximum queries have been recorded on data file #
-        if old_month == month and total_count == 500:
-            # If the on the same day or the next day within less-than 24 hours #
-            if old_day == day or (old_day == day + 1 and ((old_hour + 24) % 24 >= hour)):
-                pass
-            # If the data files are no longer needed #
-            else:
-                # Delete the counter and execution time files #
-                os.remove(counter_file)
-                os.remove(execution_time_file)
-    else:
-        old_month, old_day, old_hour = None, None, None
+    # Load the program data (API daily call count & exec time of first call) #
+    total_count, old_month, old_day, old_hour = LoadProgramData(counter_file, execution_time_file, month, day, hour)
 
     logging.info(f'Count before app {total_count}\n')
 
@@ -233,22 +191,8 @@ def main():
 
     logging.info(f'Count after app: {total_count}')
 
-    # Save daily allowed total counter to data file #
-    CounterDataOutput(counter_file, total_count)
-
-    # If the last execution time file exists #
-    if os.path.isfile(execution_time_file):
-        if old_month and old_day and old_hour and old_month:
-            # If the on the same day or the next day within less-than 24 hours #
-            if old_day == day or (old_day == day + 1 and ((old_hour + 24) % 24 >= hour)):
-                pass
-            # If the 24-hour period is over #
-            else:
-                # Save the execution time to csv #
-                TimeCsvOutput(execution_time_file)
-    else:
-        # Save the execution time to csv #
-        TimeCsvOutput(execution_time_file)
+    # Store the program data for next execution #
+    StoreProgramData(counter_file, total_count, execution_time_file, old_month, old_day, old_hour, day, hour)
 
 
 if __name__ == "__main__":

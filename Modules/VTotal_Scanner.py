@@ -36,7 +36,7 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
             for _, _, files in os.walk(scan_dir):
                 for file in files:
                     # Skip the .keep file #
-                    if file.startswith('.'):
+                    if file.startswith('.keep'):
                         continue
 
                     output_text += f'{file}\n\n'
@@ -66,7 +66,7 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
                     print(f'Generating report for: {file}')
                     bytes_item = file.encode()
 
-                    # Generate MD5 hash of current file in list #
+                    # Generate SHA256 hash of current file in list #
                     file_md5 = hashlib.sha256(bytes_item).hexdigest()
                     try:
                         # Get a Virus-Total report of the hashed file #
@@ -75,7 +75,7 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
                     except ApiError as err:
                         QtError(err)
                         logging.exception(f'API error occurred - {err}\n\n')
-                        sys.exit(5)
+                        sys.exit(7)
 
                     # If successful response code is returned #
                     if response['response_code'] == 200:
@@ -91,25 +91,25 @@ def VTotalScan(api_key: str, scan_dir: str, out_file: str, daily_count: int, gui
                                 ' wait 60 seconds and try again')
                         logging.exception('Max API Error: API calls per minute maxed out at 4,'
                                           ' wait 60 seconds and try again\n\n')
-                        sys.exit(6)
+                        sys.exit(8)
 
                     # If response code is for invalid request #
                     elif response['response_code'] == 400:
                         QtError('Request Error: Invalid API request detected, check request formatting')
                         logging.exception('Request Error: Invalid API request detected, check request formatting\n\n')
-                        sys.exit(7)
+                        sys.exit(9)
 
                     # If response code is for forbidden access #
                     elif response['response_code'] == 403:
                         QtError('Forbidden Error: Unable to access API, confirm key exists and is valid')
                         logging.exception('Forbidden Error: Unable to access API, confirm key exists and is valid\n\n')
-                        sys.exit(8)
+                        sys.exit(10)
 
                     # If unknown response code occurs #
                     else:
                         QtError('Unknown response code occurred')
                         logging.exception('Unknown response code occurred\n\n')
-                        sys.exit(9)
+                        sys.exit(11)
 
                     daily_count += 1
                     minute_count -= 1

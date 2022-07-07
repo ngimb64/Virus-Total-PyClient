@@ -2,12 +2,32 @@
 import csv
 import errno
 import logging
+import os
 import pickle
 import sys
 from datetime import datetime
 
 # External Modules #
 import PyQt5.QtWidgets as Qtw
+
+
+"""
+################
+Function Index #
+########################################################################################################################
+CounterDataInput - Reads total number of API queries from data file. 
+CounterDataOutput - Stores total number of API queries in data file.
+ErrorQuery - Looks up the errno message to get description.
+LoadProgramData - Checks if exist program data exists. If so, the data loaded from the files and checked to see if the 
+                  24 hour period for the 500 daily API calls is past. If it is past the 24 hour period the data files \
+                  will be deleted to keep track of the new 24 period.
+PrintErr - Displays error message through standard output.
+QtError - Prints a GUI error message with PyQT.
+TimeCsvInput - Reads the time data stored in CSV file.
+TimeCsvOutput - Stores execution time and data in cvs file.
+########################################################################################################################
+"""
+
 
 """
 ########################################################################################################################
@@ -36,7 +56,7 @@ def CounterDataInput(input_file: str) -> int:
 Name:       CounterDataOutput
 Purpose:    Stores total number of API queries in data file.
 Parameters: The data file to store output and the current daily total.
-Returns:    None
+Returns:    Nothing
 ########################################################################################################################
 """
 def CounterDataOutput(output_file: str, day_count: int):
@@ -87,6 +107,48 @@ def ErrorQuery(err_path: str, err_mode: str, err_obj):
 
 """
 ########################################################################################################################
+Name:       LoadProgramData
+Purpose:    Checks if exist program data exists. If so, the data loaded from the files and checked to see if the 24 \
+            hour period for the 500 daily API calls is past. If it is past the 24 hour period the data files will be \
+            deleted to keep track of the new 24 period.
+Parameters: Nothing
+Returns:    Tuple with the start execution time of period and total daily API calll count if successfull, otherwise \
+            None values. 
+########################################################################################################################
+"""
+def LoadProgramData(count_file: str, exec_time_file: str, month: int, day: int, hour: int) -> tuple:
+    # If the counter data file does not exist #
+    if not os.path.isfile(count_file):
+        daily_count = 0
+    # If the data file exists #
+    else:
+        # Load the counter data from the data file #
+        daily_count = CounterDataInput(count_file)
+
+    # If the last execution time file exists #
+    if os.path.isfile(exec_time_file):
+        # Read old execution time from csv file #
+        prev_month, prev_day, prev_hour = TimeCsvInput(exec_time_file)
+
+        # If the last execution occurred in the same month and
+        # maximum queries have been recorded on data file #
+        if prev_month == month and daily_count == 500:
+            # If the on the same day or the next day within less-than 24 hours #
+            if prev_day == day or (prev_day == day + 1 and ((prev_hour + 24) % 24 >= hour)):
+                pass
+            # If the data files are no longer needed #
+            else:
+                # Delete the counter and execution time files #
+                os.remove(count_file)
+                os.remove(exec_time_file)
+
+        return daily_count, prev_month, prev_day, prev_hour
+    else:
+        return daily_count, None, None, None
+
+
+"""
+########################################################################################################################
 Name:       PrintErr
 Purpose:    Displays error message through standard output.
 Parameters: Error message to be displayed.
@@ -102,7 +164,7 @@ def PrintErr(msg: str):
 Name:       QtError
 Purpose:    Prints a GUI error message with PyQT.
 Parameters: Error message object.
-Returns:    
+Returns:    Nothing 
 ########################################################################################################################
 """
 def QtError(err_obj: object):
@@ -112,6 +174,35 @@ def QtError(err_obj: object):
     msg.setInformativeText(err_obj)
     msg.setWindowTitle("Error")
     msg.exec_()
+
+
+"""
+########################################################################################################################
+Name:       StoreProgramData
+Purpose:    Stores the API daily API counter data and execution time if first call within a 24 hour period.
+Parameters: Counter data file name, current daily API call total, execution time file name, the stored month, day, and \
+            hour, and the current day and hour.
+Returns:    Nothing
+########################################################################################################################
+"""
+def StoreProgramData(counter_file: str, total_count: int, execution_time_file: str, old_month: int, old_day: int,
+                     old_hour: int, day: int, hour: int):
+    # Save daily allowed total counter to data file #
+    CounterDataOutput(counter_file, total_count)
+
+    # If the last execution time file exists #
+    if os.path.isfile(execution_time_file):
+        if old_month and old_day and old_hour:
+            # If the on the same day or the next day within less-than 24 hours #
+            if old_day == day or (old_day == day + 1 and ((old_hour + 24) % 24 >= hour)):
+                pass
+            # If the 24-hour period is over #
+            else:
+                # Save the execution time to csv #
+                TimeCsvOutput(execution_time_file)
+    else:
+        # Save the execution time to csv #
+        TimeCsvOutput(execution_time_file)
 
 
 """
@@ -166,7 +257,7 @@ def TimeCsvInput(input_csv: str) -> tuple:
     # If value is not int #
     except ValueError as err:
         PrintErr(f'Value: Error occurred retrieving CSV execution time values - {err}')
-        sys.exit(4)
+        sys.exit(6)
 
     return ret_month, ret_day, ret_hour
 
@@ -176,7 +267,7 @@ def TimeCsvInput(input_csv: str) -> tuple:
 Name:       TimeCsvOutput
 Purpose:    Stores execution time and data in cvs file.
 Parameters: The data file to store output.
-Returns:    None
+Returns:    Nothing
 ########################################################################################################################
 """
 def TimeCsvOutput(output_csv: str):

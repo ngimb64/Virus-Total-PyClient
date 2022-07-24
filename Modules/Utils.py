@@ -45,8 +45,8 @@ def CounterDataInput(input_file: str) -> int:
             stored_counter = pickle.load(in_file)
 
     # If file IO error occurs #
-    except IOError as err:
-        ErrorQuery(input_file, 'rb', err)
+    except (IOError, OSError) as file_err:
+        ErrorQuery(input_file, 'rb', file_err)
 
     return stored_counter
 
@@ -67,8 +67,8 @@ def CounterDataOutput(output_file: str, day_count: int):
             pickle.dump(day_count, out_file)
 
     # If file IO error occurs #
-    except IOError as err:
-        ErrorQuery(output_file, 'wb', err)
+    except (IOError, OSError) as file_err:
+        ErrorQuery(output_file, 'wb', file_err)
 
 
 """
@@ -112,7 +112,7 @@ Purpose:    Checks if exist program data exists. If so, the data loaded from the
             hour period for the 500 daily API calls is past. If it is past the 24 hour period the data files will be \
             deleted to keep track of the new 24 period.
 Parameters: Nothing
-Returns:    Tuple with the start execution time of period and total daily API calll count if successfull, otherwise \
+Returns:    Tuple with the start execution time of period and total daily API call count if successful, otherwise \
             None values. 
 ########################################################################################################################
 """
@@ -167,7 +167,7 @@ Parameters: Error message object.
 Returns:    Nothing 
 ########################################################################################################################
 """
-def QtError(err_obj: object):
+def QtError(err_obj):
     msg = Qtw.QMessageBox()
     msg.setIcon(Qtw.QMessageBox.Critical)
     msg.setText("* [ERROR] *")
@@ -214,41 +214,24 @@ Returns:    The data read from the CSV file (Month, Day, Hour).
 ########################################################################################################################
 """
 def TimeCsvInput(input_csv: str) -> tuple:
-    title_row = True
-    count = 0
-
+    headers = ['month', 'day', 'hour']
     try:
         # Read the file storing last execution time #
-        with open(input_csv, 'r') as in_file:
+        with open(input_csv, 'r', encoding='UTF8', newline='') as in_file:
             # Read the last execution data #
-            csv_data = csv.reader(in_file)
+            csv_data = csv.DictReader(in_file, fieldnames=headers)
 
-            # Iterate through items in data row #
+            # Get last execution time in dict format #
             for row in csv_data:
-                # If empty row or the first row (title) #
-                if not row or title_row:
-                    if title_row:
-                        title_row = False
-
-                    continue
-
-                # Iterate through CSV row #
-                for item in row:
-                    if count == 0:
-                        month = item
-                    elif count == 1:
-                        day = item
-                    elif count == 2:
-                        hour = item
-                    else:
-                        break
-
-                    count += 1
+                month = row['month']
+                day = row['day']
+                hour = row['hour']
+                break
 
     # If file IO error occurs #
-    except IOError as err:
+    except (IOError, OSError) as file_err:
         # Lookup, display, and log IO error #
-        ErrorQuery(input_csv, 'r', err)
+        ErrorQuery(input_csv, 'r', file_err)
 
     try:
         # Ensure input CSV data is int #
@@ -271,24 +254,20 @@ Returns:    Nothing
 ########################################################################################################################
 """
 def TimeCsvOutput(output_csv: str):
-    # CSV field names #
-    fields = ['Month', 'Day', 'Hour']
     # Get the current time #
     finish_time = datetime.now()
-    # Store time in dict #
-    time_dict = {'Month': finish_time.month, 'Day': finish_time.day, 'Hour': finish_time.hour}
+    # Store time in list #
+    time_dict = [finish_time.month, finish_time.day, finish_time.hour]
 
     try:
         # Write the current hour and minute to time CSV file #
-        with open(output_csv, 'w') as out_file:
+        with open(output_csv, 'w', encoding='UTF8', newline='') as out_file:
             # Create CSV dict writer object #
-            csv_writer = csv.DictWriter(out_file, fieldnames=fields)
-            # Write headers (fieldnames) #
-            csv_writer.writeheader()
+            csv_writer = csv.writer(out_file)
             # Populate the data in fields #
             csv_writer.writerow(time_dict)
 
     # If file IO error occurs #
-    except IOError as err:
+    except (IOError, OSError) as file_err:
         # Lookup, display, and log IO error #
-        ErrorQuery(output_csv, 'w', err)
+        ErrorQuery(output_csv, 'w', file_err)

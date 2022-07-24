@@ -1,3 +1,5 @@
+""" The Virus-Total Public API is limited to 500 requests per day and a rate of 4 requests per minute """
+
 # Built-in modules #
 import logging
 import os
@@ -15,7 +17,7 @@ from Modules.VTotal_Scanner import VTotalScan
 
 
 # Pseudo constants #
-API_KEY = '< Add API key here >'
+API_KEY = '1ffd1ded4a3a59d2fad391427e43c33310eb1de44f8fccfd10406195ae8d028f'
 INPUT_DIR = 'VTotalScanDock'
 
 # Global variables #
@@ -162,9 +164,6 @@ Returns:    Nothing
 """
 def main():
     global total_count
-    report_file = 'virus-total_report.txt'
-    counter_file = 'counter_data.data'
-    execution_time_file = 'last_execution_time.csv'
 
     # Confirm application is scaled to screen resolution #
     os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '1'
@@ -172,6 +171,10 @@ def main():
     # Get the current execution time #
     start_time = datetime.now()
     month, day, hour = start_time.month, start_time.day, start_time.hour
+
+    report_file = f'VirusTotalReport_{month}-{day}-{hour}.txt'
+    counter_file = 'counter_data.data'
+    execution_time_file = 'last_execution_time.csv'
 
     # Load the program data (API daily call count & exec time of first call) #
     total_count, old_month, old_day, old_hour = LoadProgramData(counter_file, execution_time_file, month, day, hour)
@@ -186,8 +189,10 @@ def main():
     # Exit application process when closed #
     try:
         sys.exit(app.exec_())
+
+    # Occurs when the user hits the exit button #
     except SystemExit:
-        print('Closing App Window ..')
+        pass
 
     logging.info(f'Count after app: {total_count}')
 

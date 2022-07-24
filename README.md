@@ -1,8 +1,13 @@
 # Virus-Total-PyClient
-![alt text](https://github.com/ngimb64/Virus-Total-PyClient/blob/main/VTotalPyClient.png?raw=true)
+![alt text](https://github.com/ngimb64/Virus-Total-PyClient/blob/main/VTotalPyClient.gif?raw=true)
+![alt text](https://github.com/ngimb64/Virus-Total-PyClient/blob/main/VTotal_PyClient.gif?raw=true)
 
 ## Prereqs
 > This program runs on Windows and Linux, written in Python 3.9
+
+## Purpose
+> A local host client to support Virus total API calls.
+> Repository contains a CLI terminal-based version, as well as a PyQt GUI version.
 
 ## Installation
 - Run the setup.py script to build a virtual environment and install all external packages in the created venv.
@@ -10,19 +15,15 @@
 > Example:<br>
 > python3 setup.py "venv name"
 
-- Once virtual env is built move to the Scripts directory in the environment folder just created.
-- In the Scripts directory, execute the "activate" script to activate the virtual environment.
-
-
-## Purpose
-> A local host client to support Virus total API calls.
-> Repository contains a CLI terminal-based version, as well as a PyQt GUI version.
-
+- Once virtual env is built traverse to the (Scripts-Windows or bin-Linux) directory in the environment folder just created.
+- For Windows in the Scripts directory, for execute the "activate" script to activate the virtual environment.
+- For Linux in the bin directory, run the command `source activate` to activate the virtual environment.
 
 ## How to use
 - Create Virus Total account
 - When logged in, get API key
 - Add API key to CLI and GUI programs before executing
+- Confirm there is data in VTotalScanDock to be scanned
 
 -- CLI --
 - Open up Command Prompt (CMD) or terminal

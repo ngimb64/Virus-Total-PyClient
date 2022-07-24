@@ -1,7 +1,13 @@
+# Contents of ScanDock #
 VTotalScanDock/*
+# Except .keep #
 !VTotalScanDock/.keep
 
+# Pycharm files #
 .idea/
+
+# venv files #
+venv/
 
 *.txt
 !packages.txt
@@ -9,4 +15,5 @@ VTotalScanDock/*
 *.data
 *.log
 
+# Pycache files #
 Modules/__pycache__/

@@ -18,7 +18,7 @@ from Modules.Utils import ErrorQuery, LoadProgramData, PrintErr, StoreProgramDat
 
 
 # Pseudo constants #
-API_KEY = '1ffd1ded4a3a59d2fad391427e43c33310eb1de44f8fccfd10406195ae8d028f'
+API_KEY = '< Add API key here >'
 INPUT_DIR = 'VTotalScanDock'
 
 

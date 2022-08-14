@@ -42,9 +42,9 @@ Repository contains a CLI terminal-based version, as well as a PyQt GUI version.
 > report of Virus-Total analysis of the item analyzed by the API.
 
 -- gui_vtotal_pyclient.pyw --
-> MainWindow &nbsp;-&nbsp; Class inherits the attributes of PyQT QMainWindow parent class.
-> __init__ &nbsp;-&nbsp; Initialize and configure the graphical user interface.
-> on_press &nbsp;-&nbsp; Executes Virus Total scanner function when button is clicked.
+> MainWindow &nbsp;-&nbsp; Class inherits the attributes of PyQT QMainWindow parent class.<br>
+> &emsp; __init__ &nbsp;-&nbsp; Initialize and configure the graphical user interface.<br>
+> &emsp; on_press &nbsp;-&nbsp; Executes Virus Total scanner function when button is clicked.
 
 > main &nbsp;-&nbsp; Manages the application initialization, configuration, and exit.
 

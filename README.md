@@ -7,29 +7,40 @@
 &#9745;&#65039; Pylint verified 9.80/10
 
 ## Prereqs
-This program runs on Windows and Linux, written in Python 3.9
+This program runs on Windows 10 and Debian-based Linux, written in Python 3.9 and updated to version 3.10.6
 
 ## Purpose
-A local host client to support Virus total API calls.
+A local host client to automate Virus total API calls based on contents of scan dock folder.
+The program also manages the number of API calls made within 24 hours and checks for 4 files in a row with sleep intervals to follow API rules.
 Repository contains a CLI terminal-based version, as well as a PyQt GUI version.
 
 ## Installation
 - Run the setup.py script to build a virtual environment and install all external packages in the created venv.
 
-> Example: `python3 setup.py venv`
+> Examples:<br> 
+>       &emsp;&emsp;- Windows:  `python setup.py venv`<br>
+>       &emsp;&emsp;- Linux:  `python3 setup.py venv`
 
 - Once virtual env is built traverse to the (Scripts-Windows or bin-Linux) directory in the environment folder just created.
-- For Windows in the Scripts directory, for execute the `./activate` script to activate the virtual environment.
-- For Linux in the bin directory, run the command `source activate` to activate the virtual environment.
+- For Windows, in the venv\Scripts directory, execute `activate` or `activate.bat` script to activate the virtual environment.
+- For Linux, in the venv/bin directory, execute `source activate` to activate the virtual environment.
+- If for some reason issues are experienced with the setup script, the alternative is to manually create an environment, activate it, then run pip install -r packages.txt in project root.
+- To exit from the virtual environment when finished, execute `deactivate`.
 
 ## How to use
 - Create Virus Total account
 - When logged in, get API key
-- Add API key to CLI and GUI programs before executing
+- Set VTOTAL_API_KEY environment variable with fresh API key before executing the program
+
+> Examples:<br>
+>       &emsp;&emsp;- Windows: `set VTOTAL_API_KEY=<api_key_value>`<br>
+>       &emsp;&emsp;- Linux: `$VTOTAL_API_KEY=<api_key_value>`
+
+
 - Confirm there is data in VTotalScanDock to be scanned
 
 -- CLI --
-- Open up Command Prompt (CMD) or terminal
+- Open up Command Prompt (CMD) or terminal and activate program venv
 - Enter the directory containing the program and execute in shell
 
 -- GUI --

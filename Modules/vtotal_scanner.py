@@ -8,6 +8,7 @@ import json
 import logging
 import sys
 import time
+from pathlib import Path
 # External modules #
 import PyQt5.QtGui as Qtg
 from virus_total_apis import PublicApi as VirusTotalPublicApi
@@ -15,33 +16,37 @@ from virus_total_apis import PublicApi as VirusTotalPublicApi
 from Modules.utils import error_query, get_files, hash_send, qt_err
 
 
-def vtotal_scan(api_key: str, scan_dir: str, report_file: str, daily_count: int, gui_outbox) -> int:
+def vtotal_scan(api_key: str, scan_dir: Path, path: Path, time_obj: object, daily_count: int,
+                gui_outbox) -> int:
     """
     Facilitates Virus Total API scans on contents of VTotalScanDock directory, sleep 60 seconds per
     4 queries.
 
     :param api_key:  The Virus Total API key.
     :param scan_dir:  The directory containing the files to be scanned.
-    :param report_file:  The name of the output file where the report will be stored.
+    :param path:  The path object to current working directory.
+    :param time_obj:  The program execution time tracking instance.
     :param daily_count:  The current number of daily API calls within the last recorded 24-hour
                          period
     :param gui_outbox:  Reference to Virus Total text box for updating GUI output.
     :return:  The update daily number of API calls after scanning files with API.
     """
     minute_count = 4
+    output_text = ''
+
     # Initialize the Virus-Total API object #
     vt_object = VirusTotalPublicApi(api_key)
-
     # Get list of files to be scanned #
     files = get_files(scan_dir)
 
-    output_text = ''
-    try:
-        # Open report file in append mode #
-        with open(report_file, 'a', encoding='utf-8') as out_file:
-            # Get the contents of input dir as list #
-            for file in files:
-                output_text += f'{file}\n\n'
+    # Get the contents of input dir as list #
+    for file in files:
+        # Format output report path for current file #
+        report_file = path / f'{file.name}_{time_obj.month}-{time_obj.day}-{time_obj.hour}.txt'
+        try:
+            # Open report file in append mode #
+            with report_file.open('a', encoding='utf-8') as out_file:
+                output_text += f'{file.name}\n\n'
                 # Write current file name to GUI output box #
                 gui_outbox.setText(output_text)
                 # Call app to update GUI output box #
@@ -72,7 +77,7 @@ def vtotal_scan(api_key: str, scan_dir: str, report_file: str, daily_count: int,
                 # If successful response code is returned #
                 if response['response_code'] == 200:
                     # Write the name of the current file to report file #
-                    out_file.write(f'File - {file}:\n{(9 + len(file)) * "*"}\n')
+                    out_file.write(f'File - {file.name}:\n{(9 + len(file.name)) * "*"}\n')
                     # Write json results to output report file #
                     json.dump(response, out_file, sort_keys=False, indent=4)
                     out_file.write('\n\n')
@@ -113,11 +118,11 @@ def vtotal_scan(api_key: str, scan_dir: str, report_file: str, daily_count: int,
                 daily_count += 1
                 minute_count -= 1
 
-    # If error occurs writing to report output file #
-    except (IOError, OSError) as file_err:
-        # Display error on application #
-        qt_err(file_err)
-        # Lookup, display, and log IO error #
-        error_query(out_file, 'a', file_err)
+        # If error occurs writing to report output file #
+        except (IOError, OSError) as file_err:
+            # Display error on application #
+            qt_err(file_err)
+            # Lookup, display, and log IO error #
+            error_query(out_file, 'a', file_err)
 
     return daily_count

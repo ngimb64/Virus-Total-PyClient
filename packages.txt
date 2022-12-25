@@ -1,2 +1,2 @@
-PyQt5==5.15.4
+PyQt5==5.15.7
 virustotal_api==1.1.11

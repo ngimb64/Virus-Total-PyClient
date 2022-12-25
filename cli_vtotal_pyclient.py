@@ -1,3 +1,4 @@
+# pylint: disable=E0401
 """
 Virus-Total Public API limits 500 requests per day at a rate of 4 requests per minute
 
@@ -5,9 +6,11 @@ Built-in modules
 """
 import json
 import logging
+import os
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
 # External modules #
 from virus_total_apis import PublicApi as VirusTotalPublicApi
 # Custom modules #
@@ -15,8 +18,9 @@ from Modules.utils import error_query, get_files, hash_send, load_data, print_er
                           TimeTracker
 
 # Pseudo constants #
-API_KEY = '< Add API key here >'
-INPUT_DIR = 'VTotalScanDock'
+API_KEY = os.environ.get('VTOTAL_API_KEY')
+CWD = Path('.')
+INPUT_DIR = CWD / 'VTotalScanDock'
 
 
 def main():
@@ -33,13 +37,14 @@ def main():
     start_time = datetime.now()
     time_obj.month, time_obj.day, time_obj.hour = start_time.month, start_time.day, start_time.hour
 
-    report_file = f'VirusTotalReport_{time_obj.month}-{time_obj.day}-{time_obj.hour}.txt'
-    counter_file = 'counter_data.data'
-    execution_time_file = 'last_execution_time.csv'
+
+    counter_file = cwd / 'counter_data.data'
+    execution_time_file = cwd / 'last_execution_time.csv'
 
     # Load the program data (API daily call count & exec time of first call) #
     total_count, time_obj.old_month, \
     time_obj.old_day, time_obj.old_hour = load_data(counter_file, execution_time_file, time_obj)
+
     # Initialize the Virus-Total API object #
     vt_object = VirusTotalPublicApi(API_KEY)
     minute_count = 4
@@ -48,13 +53,16 @@ def main():
     files = get_files(INPUT_DIR)
 
     print(f'Current number of daily Virus-Total API queries: {total_count}\n')
-    print(f'Starting Virus-Total file check on file in {INPUT_DIR}')
-    print(f'{(44 + len(INPUT_DIR)) * "*"}')
-    try:
-        # Open report file in append mode #
-        with open(report_file, 'a', encoding='utf-8') as out_file:
-            # Iterate through gathered file list #
-            for file in files:
+    print(f'Starting Virus-Total file check on file in {INPUT_DIR.name}')
+    print(f'{(44 + len(INPUT_DIR.name)) * "*"}')
+
+    # Iterate through gathered file list #
+    for file in files:
+        # Format report file path #
+        report_file = cwd / f'{file.name}_{time_obj.month}-{time_obj.day}-{time_obj.hour}.txt'
+        try:
+            # Open report file in append mode #
+            with report_file.open('a', encoding='utf-8') as out_file:
                 # If the maximum API calls have been used for the day #
                 if total_count == 500:
                     print_err('\nOnly 500 queries allowed per day .. exiting program')
@@ -66,7 +74,7 @@ def main():
                     time.sleep(60)
                     minute_count = 4
 
-                print(f'Generating report for: {file}')
+                print(f'Generating report for: {file.name}')
 
                 # Hash file and send report, return response #
                 response = hash_send(file, vt_object)
@@ -74,7 +82,7 @@ def main():
                 # If successful response code is returned #
                 if response['response_code'] == 200:
                     # Write the name of the current file to report file #
-                    out_file.write(f'File - {file}:\n{(9 + len(file)) * "*"}\n')
+                    out_file.write(f'File - {file.name}:\n{(9 + len(file.name)) * "*"}\n')
                     # Write json results to output report file #
                     json.dump(response, out_file, sort_keys=False, indent=4)
                     out_file.write('\n\n')
@@ -116,31 +124,35 @@ def main():
                 total_count += 1
                 minute_count -= 1
 
-    # If error occurs writing to report output file #
-    except (IOError, OSError) as file_err:
-        # Lookup, display, and log IO error #
-        error_query(report_file, 'a', file_err)
+        # If error occurs writing to report output file #
+        except (IOError, OSError) as file_err:
+            # Lookup, display, and log IO error #
+            error_query(str(report_file.resolve()), 'a', file_err)
 
     # Store the program data for next execution #
     store_data(counter_file, total_count, execution_time_file, time_obj)
 
 
 if __name__ == '__main__':
-    # Initialize logging facilities #
-    logging.basicConfig(level=logging.DEBUG, filename='VTotal_CliLog.log')
-
+    RET = 0
+    # Get the current working directory #
+    cwd = Path('.')
+    # Set the log file name #
+    logging.basicConfig(filename='VTotal_CLI_Log.log',
+                        format='%(asctime)s line%(lineno)d::%(funcName)s[%(levelname)s]>>'
+                               ' %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     try:
         main()
 
     # Ctrl + C to stop scan, store data, and exit #
     except KeyboardInterrupt:
-        pass
+        print('\n[!] Ctrl + c detected .. exiting program')
 
     # If unexpected exception occurs #
     except Exception as err:
         # Print error and log #
         print_err(f'Unexpected error occurred - {err}')
         logging.exception('Unexpected error occurred - %s\n\n', err)
-        sys.exit(1)
+        RET = 1
 
-    sys.exit(0)
+    sys.exit(RET)

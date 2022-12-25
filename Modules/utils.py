@@ -8,12 +8,13 @@ import os
 import pickle
 import sys
 from datetime import datetime
+from pathlib import Path
 # External Modules #
 import PyQt5.QtWidgets as Qtw
 from virus_total_apis import ApiError
 
 
-def counter_data_input(input_file: str) -> int:
+def counter_data_input(input_file: Path) -> int:
     """
     Reads total number of API queries from data file.
 
@@ -22,19 +23,19 @@ def counter_data_input(input_file: str) -> int:
     """
     try:
         # Read from counter data file in bytes mode #
-        with open(input_file, 'rb') as in_file:
+        with input_file.open('rb') as in_file:
             # Load the int API counter #
             stored_counter = pickle.load(in_file)
 
-    # If file IO error occurs #
+    # If error occurs during file operation #
     except (IOError, OSError) as file_err:
         # Lookup, display, and log IO error #
-        error_query(input_file, 'rb', file_err)
+        error_query(str(input_file.resolve()), 'rb', file_err)
 
     return stored_counter
 
 
-def counter_data_output(output_file: str, day_count: int):
+def counter_data_output(output_file: Path, day_count: int):
     """
     Stores total number of API queries in data file.
 
@@ -44,14 +45,14 @@ def counter_data_output(output_file: str, day_count: int):
     """
     try:
         # Write to counter data file in bytes mode #
-        with open(output_file, 'wb') as out_file:
+        with output_file.open('wb') as out_file:
             # Save API int counter to data file #
             pickle.dump(day_count, out_file)
 
-    # If file IO error occurs #
+    # If error occurs during file operation #
     except (IOError, OSError) as file_err:
         # Lookup, display, and log IO error #
-        error_query(output_file, 'wb', file_err)
+        error_query(str(output_file.resolve()), 'wb', file_err)
 
 
 def error_query(err_path: str, err_mode: str, err_obj):
@@ -94,37 +95,54 @@ def error_query(err_path: str, err_mode: str, err_obj):
         sys.exit(5)
 
 
-def get_files(path: str):
+def get_files(path: Path) -> list[Path]:
     """
     Iterate through files in path and add to list if not the .keep file or not a directory.
 
     :param path:  The path to the dir to iterate through files and add to list.
-    :return:  The populated file list.
+    :return:  The populated file path list.
     """
     file_list = []
+
     # Append items in path to the file list if they are not .keep or a directory #
-    [file_list.append(file.name) for file in os.scandir(path) if not file.name == '.keep' and
-     not os.path.isdir(f'{path}{file.name}')]
+    for file in os.scandir(path):
+        # Format file path to current iteration #
+        curr_file = path / file.name
+
+        # If the current file is not .keep for git tracking or not a directory #
+        if not file.name == '.keep' and not curr_file.is_dir():
+            # Append the current file path instance to file list #
+            file_list.append(curr_file)
+
     return file_list
 
 
-def hash_send(file_name: str, vt_instance: object) -> dict:
+def hash_send(file_path: Path, vt_instance: object) -> dict:
     """
     Encode passed in file as bytes, perform SHA512 hash, and send hash to Virus Total API. Return \
     the result dictionary.
 
-    :param file_name:  The file to be hashed and tested with the Virus Total API.
-    :param vt_instance:  The initalized Virus Total instance.
+    :param file_path:  The path to the file to be hashed and tested with the Virus Total API.
+    :param vt_instance:  The initialized Virus Total instance.
     :return:  The result dictionary of API call.
     """
-    # Get file content in bytes form for hashing #
-    bytes_item = file_name.encode()
-    # Generate SHA256 hash of current file in list #
-    file_md5 = hashlib.sha256(bytes_item).hexdigest()
+    # Initialize SHA256 algorithm instance #
+    sha_hash = hashlib.sha256()
+
+    try:
+        with file_path.open('rb') as in_file:
+            # Read the data and hash by 4096 byte chunks #
+            for byte_chunk in iter(lambda: in_file.read(4096), b''):
+                sha_hash.update(byte_chunk)
+
+    # If error occurs during file operation #
+    except (IOError, OSError) as file_err:
+        # Lookup, display, and log IO error #
+        error_query(str(file_path.resolve()), 'rb', file_err)
 
     try:
         # Get a Virus-Total report of the hashed file #
-        response = vt_instance.get_file_report(file_md5)
+        response = vt_instance.get_file_report(sha_hash.hexdigest())
 
     # If error occurs interacting with Virus-Total API #
     except ApiError as api_err:
@@ -135,7 +153,7 @@ def hash_send(file_name: str, vt_instance: object) -> dict:
     return response
 
 
-def load_data(count_file: str, exec_time_file: str, time_inst: object) -> tuple:
+def load_data(count_file: Path, exec_time_file: Path, time_inst: object) -> tuple:
     """
     Checks if exist program data exists. If so, the data loaded from the files and checked to see \
     if the 24-hour period for the 500 daily API calls is past. If it is past the 24-hour period \
@@ -148,7 +166,7 @@ def load_data(count_file: str, exec_time_file: str, time_inst: object) -> tuple:
               successful, otherwise None values.
     """
     # If the counter data file does not exist #
-    if not os.path.isfile(count_file):
+    if not count_file.exists():
         daily_count = 0
     # If the data file exists #
     else:
@@ -156,7 +174,7 @@ def load_data(count_file: str, exec_time_file: str, time_inst: object) -> tuple:
         daily_count = counter_data_input(count_file)
 
     # If the last execution time file exists #
-    if os.path.isfile(exec_time_file):
+    if exec_time_file.exists():
         # Read old execution time from csv file #
         prev_month, prev_day, prev_hour = time_csv_input(exec_time_file)
 
@@ -170,8 +188,8 @@ def load_data(count_file: str, exec_time_file: str, time_inst: object) -> tuple:
             # If the data files are no longer needed #
             else:
                 # Delete the counter and execution time files #
-                os.remove(count_file)
-                os.remove(exec_time_file)
+                count_file.unlink()
+                exec_time_file.unlink()
 
         return daily_count, prev_month, prev_day, prev_hour
 
@@ -203,7 +221,7 @@ def qt_err(err_obj):
     msg.exec_()
 
 
-def store_data(counter_file: str, total_count: int, execution_time_file: str, time_inst: object):
+def store_data(counter_file: Path, total_count: int, execution_time_file: Path, time_inst: object):
     """
     Stores the API daily API counter data and execution time if first call within a 24-hour period.
 
@@ -217,7 +235,7 @@ def store_data(counter_file: str, total_count: int, execution_time_file: str, ti
     counter_data_output(counter_file, total_count)
 
     # If the last execution time file exists #
-    if os.path.isfile(execution_time_file):
+    if execution_time_file.exists():
         if time_inst.old_month and time_inst.old_day and time_inst.old_hour:
             # If the on the same day or the next day within less-than 24 hours #
             if time_inst.old_day == time_inst.day or (time_inst.old_day == time_inst.day + 1
@@ -232,7 +250,7 @@ def store_data(counter_file: str, total_count: int, execution_time_file: str, ti
         time_csv_output(execution_time_file)
 
 
-def time_csv_input(input_csv: str) -> tuple:
+def time_csv_input(input_csv: Path) -> tuple:
     """
     Reads the time data stored in csv file.
 
@@ -242,7 +260,7 @@ def time_csv_input(input_csv: str) -> tuple:
     headers = ['month', 'day', 'hour']
     try:
         # Read the file storing last execution time #
-        with open(input_csv, 'r', encoding='utf-8', newline='') as in_file:
+        with input_csv.open('r', encoding='utf-8', newline='') as in_file:
             # Read the last execution data #
             csv_data = csv.DictReader(in_file, fieldnames=headers)
 
@@ -253,16 +271,16 @@ def time_csv_input(input_csv: str) -> tuple:
                 hour = row['hour']
                 break
 
-    # If file IO error occurs #
+    # If error occurs during file operation #
     except (IOError, OSError) as file_err:
         # Lookup, display, and log IO error #
-        error_query(input_csv, 'r', file_err)
+        error_query(str(input_csv.resolve()), 'r', file_err)
 
     try:
         # Ensure input CSV data is int #
         ret_month, ret_day, ret_hour = int(month), int(day), int(hour)
 
-    # If value is not int #
+    # If value is not integer #
     except ValueError as val_err:
         # Print error and log #
         print_err(f'Value: Error occurred retrieving CSV execution time values - {val_err}')
@@ -272,7 +290,7 @@ def time_csv_input(input_csv: str) -> tuple:
     return ret_month, ret_day, ret_hour
 
 
-def time_csv_output(output_csv: str):
+def time_csv_output(output_csv: Path):
     """
     Stores execution time and data in cvs file.
 
@@ -286,16 +304,16 @@ def time_csv_output(output_csv: str):
 
     try:
         # Write the current hour and minute to time CSV file #
-        with open(output_csv, 'w', encoding='utf-8', newline='') as out_file:
+        with output_csv.open('w', encoding='utf-8', newline='') as out_file:
             # Create CSV dict writer object #
             csv_writer = csv.writer(out_file)
             # Populate the data in fields #
             csv_writer.writerow(time_dict)
 
-    # If file IO error occurs #
+    # If error occurs during file operation #
     except (IOError, OSError) as file_err:
         # Lookup, display, and log IO error #
-        error_query(output_csv, 'w', file_err)
+        error_query(str(output_csv.resolve()), 'w', file_err)
 
 
 class TimeTracker:

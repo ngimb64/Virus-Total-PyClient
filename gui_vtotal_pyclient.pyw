@@ -8,6 +8,7 @@ import logging
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 # External modules #
 from PyQt5.QtCore import Qt
 import PyQt5.QtWidgets as Qtw
@@ -18,8 +19,9 @@ from Modules.vtotal_scanner import vtotal_scan
 
 
 # Pseudo constants #
-API_KEY = '< Add API key here >'
-INPUT_DIR = 'VTotalScanDock'
+API_KEY = os.environ.get('VTOTAL_API_KEY')
+CWD = Path('.')
+INPUT_DIR = CWD / 'VTotalScanDock'
 
 # Global variables #
 global TOTAL_COUNT
@@ -27,7 +29,7 @@ global TOTAL_COUNT
 
 class MainWindow(Qtw.QMainWindow):
     """ Class inherits the attributes of PyQT QMainWindow parent class. """
-    def __init__(self, result_file: str, daily_calls: int):
+    def __init__(self, time_instance: object, daily_calls: int):
         """
         Initialize and configure the graphical user interface.
 
@@ -37,19 +39,19 @@ class MainWindow(Qtw.QMainWindow):
         """
         # Set class to inherit attributes of parent class #
         super().__init__()
-
+        # Set the background color of main window #
         self.setStyleSheet('background-color: #1eb300;')
-
         # Set the title of the application #
         self.setWindowTitle('VTotal PyClient')
-
         # Set the window size #
         self.setGeometry(0, 0, 800, 600)
 
         # Total number of daily API calls #
         self._api_count = daily_calls
-        # Save the output file name #
-        self._out_file = result_file
+        # Save the path to current working directory #
+        self._cwd = CWD
+        # Save the program time instance #
+        self._time_obj = time_instance
 
         # Create a label for instructions #
         self._instruction_label = Qtw.QLabel('Click button below to run Virus Total API'
@@ -153,7 +155,7 @@ class MainWindow(Qtw.QMainWindow):
         Qtg.QGuiApplication.processEvents()
 
         # Pass needed params into virus scanner, get the updated daily API call total in return #
-        TOTAL_COUNT = vtotal_scan(API_KEY, INPUT_DIR, self._out_file,
+        TOTAL_COUNT = vtotal_scan(API_KEY, INPUT_DIR, self._cwd, self._time_obj,
                                   self._api_count, self._output_box)
 
         # Update daily API counter #
@@ -182,9 +184,8 @@ def main():
     start_time = datetime.now()
     time_obj.month, time_obj.day, time_obj.hour = start_time.month, start_time.day, start_time.hour
 
-    report_file = f'VirusTotalReport_{time_obj.month}-{time_obj.day}-{time_obj.hour}.txt'
-    counter_file = 'counter_data.data'
-    execution_time_file = 'last_execution_time.csv'
+    counter_file = CWD / 'counter_data.data'
+    execution_time_file = CWD / 'last_execution_time.csv'
 
     # Load the program data (API daily call count & exec time of first call) #
     TOTAL_COUNT, time_obj.old_month, \
@@ -195,7 +196,7 @@ def main():
     # Initialize QApplication class #
     app = Qtw.QApplication(sys.argv)
     # Configure the main window UI for app #
-    _ = MainWindow(report_file, TOTAL_COUNT)
+    _ = MainWindow(time_obj, TOTAL_COUNT)
 
     # Exit application process when closed #
     try:
@@ -212,9 +213,10 @@ def main():
 
 
 if __name__ == "__main__":
-    # Initialize logging facilities #
-    logging.basicConfig(level=logging.DEBUG, filename='VTotal_GuiLog.log')
-
+    # Set the log file name #
+    logging.basicConfig(filename='VTotal_GUI_Log.log',
+                        format='%(asctime)s line%(lineno)d::%(funcName)s[%(levelname)s]>>'
+                               ' %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     try:
         main()
 

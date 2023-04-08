@@ -1,18 +1,25 @@
-# Virus-Total-PyClient
+<div align="center" style="font-family: monospace">
+<h1>Virus-Total-PyClient</h1>
+&#9745;&#65039; Bandit verified &nbsp;|&nbsp; &#9745;&#65039; Synk verified &nbsp;|&nbsp; &#9745;&#65039; Pylint verified 9.80/10
+<br>
+
 ![alt text](https://github.com/ngimb64/Virus-Total-PyClient/blob/main/VTotalPyClient.gif?raw=true)
 ![alt text](https://github.com/ngimb64/Virus-Total-PyClient/blob/main/VTotal_PyClient.gif?raw=true)
-
-&#9745;&#65039; Bandit verified<br>
-&#9745;&#65039; Synk verified<br>
-&#9745;&#65039; Pylint verified 9.80/10
-
-## Prereqs
-This program runs on Windows 10 and Debian-based Linux, written in Python 3.9 and updated to version 3.10.6
+</div>
 
 ## Purpose
 A local host client to automate Virus total API calls based on contents of scan dock folder.
 The program also manages the number of API calls made within 24 hours and checks for 4 files in a row with sleep intervals to follow API rules.
 Repository contains a CLI terminal-based version, as well as a PyQt GUI version.
+
+### License
+The program is licensed under [GNU Public License v3.0](LICENSE.md)
+
+### Contributions or Issues
+[CONTRIBUTING](CONTRIBUTING.md)
+
+## Prereqs
+This program runs on Windows 10 and Debian-based Linux, written in Python 3.9 and updated to version 3.10.6
 
 ## Installation
 - Run the setup.py script to build a virtual environment and install all external packages in the created venv.

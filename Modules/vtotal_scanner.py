@@ -88,7 +88,7 @@ def vtotal_scan(api_key: str, scan_dir: Path, path: Path, time_obj: object, dail
                     qt_err('Max API Error: API calls per minute maxed out at 4,'
                            ' wait 60 seconds and try again')
                     logging.exception('Max API Error: API calls per minute maxed out at 4,'
-                                      ' wait 60 seconds and try again\n\n')
+                                      ' wait 60 seconds and try again')
                     sys.exit(8)
 
                 # If response code is for invalid request #
@@ -96,7 +96,7 @@ def vtotal_scan(api_key: str, scan_dir: Path, path: Path, time_obj: object, dail
                     # Display error on app and log #
                     qt_err('Request Error: Invalid API request detected, check request formatting')
                     logging.exception('Request Error: Invalid API request detected,'
-                                      ' check request formatting\n\n')
+                                      ' check request formatting')
                     sys.exit(9)
 
                 # If response code is for forbidden access #
@@ -105,21 +105,21 @@ def vtotal_scan(api_key: str, scan_dir: Path, path: Path, time_obj: object, dail
                     qt_err('Forbidden Error: Unable to access API,'
                             ' confirm key exists and is valid')
                     logging.exception('Forbidden Error: Unable to access API,'
-                                      ' confirm key exists and is valid\n\n')
+                                      ' confirm key exists and is valid')
                     sys.exit(10)
 
                 # If unknown response code occurs #
                 else:
                     # Display error on app and log #
                     qt_err('Unknown response code occurred')
-                    logging.exception('Unknown response code occurred\n\n')
+                    logging.exception('Unknown response code occurred')
                     sys.exit(11)
 
                 daily_count += 1
                 minute_count -= 1
 
         # If error occurs writing to report output file #
-        except (IOError, OSError) as file_err:
+        except OSError as file_err:
             # Display error on application #
             qt_err(file_err)
             # Lookup, display, and log IO error #

@@ -17,10 +17,9 @@ from virus_total_apis import PublicApi as VirusTotalPublicApi
 from Modules.utils import error_query, get_files, hash_send, load_data, print_err, store_data, \
                           TimeTracker
 
+
 # Pseudo constants #
 API_KEY = os.environ.get('VTOTAL_API_KEY')
-CWD = Path('.')
-INPUT_DIR = CWD / 'VTotalScanDock'
 
 
 def main():
@@ -32,12 +31,10 @@ def main():
     """
     # Initialize time tracking instance #
     time_obj = TimeTracker()
-
     # Get the current execution time #
     start_time = datetime.now()
     time_obj.month, time_obj.day, time_obj.hour = start_time.month, start_time.day, start_time.hour
-
-
+    # Set the counter file and execution time file paths #
     counter_file = cwd / 'counter_data.data'
     execution_time_file = cwd / 'last_execution_time.csv'
 
@@ -50,11 +47,11 @@ def main():
     minute_count = 4
 
     # Get list of files to be scanned #
-    files = get_files(INPUT_DIR)
+    files = get_files(input_dir)
 
     print(f'Current number of daily Virus-Total API queries: {total_count}\n')
-    print(f'Starting Virus-Total file check on file in {INPUT_DIR.name}')
-    print(f'{(44 + len(INPUT_DIR.name)) * "*"}')
+    print(f'Starting Virus-Total file check on file in {input_dir.name}')
+    print(f'{(44 + len(input_dir.name)) * "*"}')
 
     # Iterate through gathered file list #
     for file in files:
@@ -93,7 +90,7 @@ def main():
                     print_err('Max API Error: API calls per minute maxed out at 4,'
                               ' wait 60 seconds and try again')
                     logging.exception('Max API Error: API calls per minute maxed out at 4,'
-                                      ' wait 60 seconds and try again\n\n')
+                                      ' wait 60 seconds and try again')
                     sys.exit(8)
 
                 # If response code is for invalid request #
@@ -102,7 +99,7 @@ def main():
                     print_err('Request Error: Invalid API request detected,'
                               ' check request formatting')
                     logging.exception('Request Error: Invalid API request detected,'
-                                      ' check request formatting\n\n')
+                                      ' check request formatting')
                     sys.exit(9)
 
                 # If response code is for forbidden access #
@@ -111,23 +108,23 @@ def main():
                     print_err('Forbidden Error: Unable to access API,'
                               ' confirm key exists and is valid')
                     logging.exception('Forbidden Error: Unable to access API,'
-                                      ' confirm key exists and is valid\n\n')
+                                      ' confirm key exists and is valid')
                     sys.exit(10)
 
                 # If unknown response code occurs #
                 else:
                     # Print error and log #
                     print_err('Unknown response code occurred')
-                    logging.exception('Unknown response code occurred\n\n')
+                    logging.exception('Unknown response code occurred')
                     sys.exit(11)
 
                 total_count += 1
                 minute_count -= 1
 
         # If error occurs writing to report output file #
-        except (IOError, OSError) as file_err:
+        except OSError as file_err:
             # Lookup, display, and log IO error #
-            error_query(str(report_file.resolve()), 'a', file_err)
+            error_query(str(report_file), 'a', file_err)
 
     # Store the program data for next execution #
     store_data(counter_file, total_count, execution_time_file, time_obj)
@@ -136,10 +133,12 @@ def main():
 if __name__ == '__main__':
     RET = 0
     # Get the current working directory #
-    cwd = Path('.')
+    cwd = Path.cwd()
+    # Set the Virus Total dock for files to be scanned #
+    input_dir = cwd / 'VTotalScanDock'
     # Set the log file name #
     logging.basicConfig(filename='VTotal_CLI_Log.log',
-                        format='%(asctime)s line%(lineno)d::%(funcName)s[%(levelname)s]>>'
+                        format='%(asctime)s %(lineno)4d@%(filename)-23s[%(levelname)s]>>  '
                                ' %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     try:
         main()
@@ -152,7 +151,7 @@ if __name__ == '__main__':
     except Exception as err:
         # Print error and log #
         print_err(f'Unexpected error occurred - {err}')
-        logging.exception('Unexpected error occurred - %s\n\n', err)
+        logging.exception('Unexpected error occurred - %s', err)
         RET = 1
 
     sys.exit(RET)

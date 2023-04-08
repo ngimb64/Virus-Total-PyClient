@@ -18,22 +18,17 @@ from Modules.utils import load_data, qt_err, store_data, TimeTracker
 from Modules.vtotal_scanner import vtotal_scan
 
 
-# Pseudo constants #
-API_KEY = os.environ.get('VTOTAL_API_KEY')
-CWD = Path('.')
-INPUT_DIR = CWD / 'VTotalScanDock'
-
 # Global variables #
+API_KEY = os.environ.get('VTOTAL_API_KEY')
 global TOTAL_COUNT
 
 
-class MainWindow(Qtw.QMainWindow):
+class MainWindow(Qtw.QWidget):
     """ Class inherits the attributes of PyQT QMainWindow parent class. """
     def __init__(self, time_instance: object, daily_calls: int):
         """
         Initialize and configure the graphical user interface.
 
-        :param result_file:  Name of the file where the Virus Total report will be written to.
         :param daily_calls:  The current number of API calls that have been executed within the \
                              past day.
         """
@@ -45,100 +40,95 @@ class MainWindow(Qtw.QMainWindow):
         self.setWindowTitle('VTotal PyClient')
         # Set the window size #
         self.setGeometry(0, 0, 800, 600)
+        # Initialize grid layout instance #
+        __layout = Qtw.QGridLayout()
 
         # Total number of daily API calls #
         self._api_count = daily_calls
         # Save the path to current working directory #
-        self._cwd = CWD
+        self._cwd = cwd
         # Save the program time instance #
         self._time_obj = time_instance
 
         # Create a label for instructions #
         self._instruction_label = Qtw.QLabel('Click button below to run Virus Total API'
                                             ' scan on VTotalScanDock contents', self)
-        # Position and set label size #
-        self._instruction_label.move(0, 0)
-        self._instruction_label.resize(700, 100)
-
         # Set label to word wrap #
         self._instruction_label.setWordWrap(True)
         # Change label font size #
-        self._instruction_label.setFont(Qtg.QFont('Arial', 18))
+        self._instruction_label.setFont(Qtg.QFont('Arial', 16))
         # Align label center #
         self._instruction_label.setAlignment(Qt.AlignCenter)
         # Set label css border #
         self._instruction_label.setStyleSheet('''
-                                               color: #1eb300;
-                                               background-color: #000000;
-                                               border: 2px solid #1eb300;
-                                               border-radius: 10px;
-                                             ''')
+            color: #1eb300;
+            background-color: #000000;
+            border: 10px double #fff633;
+            border-radius: 20px;
+        ''')
+        # Add instruction label box to layout #
+        __layout.addWidget(self._instruction_label, 0, 0, 1, 3)
 
         # Create label to display current api counter #
         self._counter_label = Qtw.QLabel(f'# of daily API calls\n{self._api_count}', self)
-        # Position and set label size #
-        self._counter_label.move(700, 0)
-        self._counter_label.resize(100, 100)
-
         # Set label to word wrap #
         self._counter_label.setWordWrap(True)
         # Change label font size #
-        self._counter_label.setFont(Qtg.QFont('Arial', 14))
+        self._counter_label.setFont(Qtg.QFont('Arial', 16))
         # Align label center #
         self._counter_label.setAlignment(Qt.AlignCenter)
         # Set label css border #
         self._counter_label.setStyleSheet('''
-                                           border: 2px solid #000000;
-                                           border-radius: 10px;
-                                         ''')
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 20px;
+        ''')
+        # Add counter label box to layout #
+        __layout.addWidget(self._counter_label, 0, 3)
 
         # Create scan output box #
         self._output_box = Qtw.QTextEdit('', self)
         # Set the console output screen to read-only #
         self._output_box.setReadOnly(True)
-        # Position and set output box size #
-        self._output_box.move(0, 150)
-        self._output_box.resize(800, 350)
-
         # Change label font size #
         self._output_box.setFont(Qtg.QFont('Arial', 16))
         # Align label left #
         self._output_box.setAlignment(Qt.AlignLeft)
         # Set output box css border #
         self._output_box.setStyleSheet('''
-                                        background-color: #ffffff;
-                                        border: 2px solid #000000;
-                                        border-radius: 10px;
-                                      ''')
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 20px;
+        ''')
+        # Add output box to layout #
+        __layout.addWidget(self._output_box, 1, 0, 4, 4)
 
         # Create button to execute tests #
         self._scan_button = Qtw.QPushButton('Run Scan', self)
-        # Position and set button size #
-        self._scan_button.move(0, 500)
-        self._scan_button.resize(800, 100)
         # Change button font size #
-        self._scan_button.setFont(Qtg.QFont('Arial', 18))
+        self._scan_button.setFont(Qtg.QFont('Arial', 20))
+        # Set the scan button minimum height #
+        self._scan_button.setMinimumHeight(60)
         # Set function to execute when pressed #
         self._scan_button.clicked.connect(self.on_press)
         # Set button css #
         self._scan_button.setStyleSheet('''
-                                        QPushButton {
-                                            color: #000000;
-                                            background-color: #1eb300;
-                                            border: 2px solid #000000;
-                                            border-radius: 10px;
-                                        }
-            
-                                        QPushButton:hover {
-                                            color: #1eb300;
-                                            background-color: #000000;
-                                            border: 2px solid #1eb300;
-                                            border-radius: 10px;
-                                        }
-                                        ''')
+            QPushButton {
+                color: #000000;
+                background-color: #ffffff;
+                border: 2px solid #000000;
+            }
 
-        # Display the app #
-        self.show()
+            QPushButton:hover {
+                color: #1eb300;
+                background-color: #000000;
+                border: 10px double #fff663;
+            }
+        ''')
+        # Add scan button box to layout #
+        __layout.addWidget(self._scan_button, 5, 0, 1, 4)
+        # Establish GUI layout #
+        self.setLayout(__layout)
 
     def on_press(self):
         """
@@ -179,43 +169,50 @@ def main():
 
     # Confirm application is scaled to screen resolution #
     os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '1'
+    os.environ['QT_SCREEN_SCALE_FACTORS'] = '1'
+    os.environ['QT_SCALE_FACTOR'] = '1'
 
     # Get the current execution time #
     start_time = datetime.now()
     time_obj.month, time_obj.day, time_obj.hour = start_time.month, start_time.day, start_time.hour
 
-    counter_file = CWD / 'counter_data.data'
-    execution_time_file = CWD / 'last_execution_time.csv'
+    counter_file = cwd / 'counter_data.data'
+    execution_time_file = cwd / 'last_execution_time.csv'
 
     # Load the program data (API daily call count & exec time of first call) #
     TOTAL_COUNT, time_obj.old_month, \
     time_obj.old_day, time_obj.old_hour = load_data(counter_file, execution_time_file, time_obj)
 
-    logging.info('Count before app %s\n\n', TOTAL_COUNT)
+    logging.info('Count before app %s', TOTAL_COUNT)
 
     # Initialize QApplication class #
     app = Qtw.QApplication(sys.argv)
     # Configure the main window UI for app #
-    _ = MainWindow(time_obj, TOTAL_COUNT)
+    gui = MainWindow(time_obj, TOTAL_COUNT)
 
     # Exit application process when closed #
     try:
+        # Show the application GUI #
+        gui.show()
         sys.exit(app.exec_())
 
     # Occurs when the user hits the exit button #
     except SystemExit:
         pass
 
-    logging.info('Count after app: %s\n\n', TOTAL_COUNT)
+    logging.info('Count after app: %s', TOTAL_COUNT)
 
     # Store the program data for next execution #
     store_data(counter_file, TOTAL_COUNT, execution_time_file, time_obj)
 
 
 if __name__ == "__main__":
+    # Set program file paths #
+    cwd = Path.cwd()
+    INPUT_DIR = cwd / 'VTotalScanDock'
     # Set the log file name #
     logging.basicConfig(filename='VTotal_GUI_Log.log',
-                        format='%(asctime)s line%(lineno)d::%(funcName)s[%(levelname)s]>>'
+                        format='%(asctime)s %(lineno)4d@%(filename)-24s[%(levelname)s]>>  '
                                ' %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     try:
         main()
@@ -224,7 +221,7 @@ if __name__ == "__main__":
     except Exception as err:
         # Display error on app and log #
         qt_err(err)
-        logging.exception('Unexpected error occurred:  %s\n\n', err)
+        logging.exception('Unexpected error occurred:  %s', err)
         sys.exit(1)
 
     sys.exit(0)

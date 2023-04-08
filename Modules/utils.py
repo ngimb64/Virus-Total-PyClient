@@ -28,9 +28,9 @@ def counter_data_input(input_file: Path) -> int:
             stored_counter = pickle.load(in_file)
 
     # If error occurs during file operation #
-    except (IOError, OSError) as file_err:
+    except OSError as file_err:
         # Lookup, display, and log IO error #
-        error_query(str(input_file.resolve()), 'rb', file_err)
+        error_query(str(input_file), 'rb', file_err)
 
     return stored_counter
 
@@ -50,9 +50,9 @@ def counter_data_output(output_file: Path, day_count: int):
             pickle.dump(day_count, out_file)
 
     # If error occurs during file operation #
-    except (IOError, OSError) as file_err:
+    except OSError as file_err:
         # Lookup, display, and log IO error #
-        error_query(str(output_file.resolve()), 'wb', file_err)
+        error_query(str(output_file), 'wb', file_err)
 
 
 def error_query(err_path: str, err_mode: str, err_obj):
@@ -68,7 +68,7 @@ def error_query(err_path: str, err_mode: str, err_obj):
     if err_obj.errno == errno.ENOENT:
         # Print error and log #
         print_err(f'{err_path} does not exist')
-        logging.exception('%s does not exist\n\n', err_path)
+        logging.exception('%s does not exist', err_path)
         sys.exit(2)
 
     # If the file does not have read/write access #
@@ -76,21 +76,21 @@ def error_query(err_path: str, err_mode: str, err_obj):
         # Print error and log #
         print_err(f'{err_path} does not have permissions for {err_mode}'
                   ' file mode, if file exists confirm it is closed')
-        logging.exception('%s does not have permissions for %s file mode\n\n', err_path, err_mode)
+        logging.exception('%s does not have permissions for %s file mode', err_path, err_mode)
         sys.exit(3)
 
     # File IO error occurred #
     elif err_obj.errno == errno.EIO:
         # Print error and log #
         print_err(f'IO error occurred during {err_mode} mode on {err_path}')
-        logging.exception('IO error occurred during %s mode on %s\n\n', err_mode, err_path)
+        logging.exception('IO error occurred during %s mode on %s', err_mode, err_path)
         sys.exit(4)
 
     # If other unexpected file operation occurs #
     else:
         # Print error and log #
         print_err(f'Unexpected file operation occurred accessing {err_path}: {err_obj.errno}')
-        logging.exception('Unexpected file operation occurred accessing %s: %s\n\n',
+        logging.exception('Unexpected file operation occurred accessing %s: %s',
                           err_path, err_obj.errno)
         sys.exit(5)
 
@@ -136,9 +136,9 @@ def hash_send(file_path: Path, vt_instance: object) -> dict:
                 sha_hash.update(byte_chunk)
 
     # If error occurs during file operation #
-    except (IOError, OSError) as file_err:
+    except OSError as file_err:
         # Lookup, display, and log IO error #
-        error_query(str(file_path.resolve()), 'rb', file_err)
+        error_query(str(file_path), 'rb', file_err)
 
     try:
         # Get a Virus-Total report of the hashed file #
@@ -147,7 +147,7 @@ def hash_send(file_path: Path, vt_instance: object) -> dict:
     # If error occurs interacting with Virus-Total API #
     except ApiError as api_err:
         print_err(f'API error occurred - {api_err}')
-        logging.exception('Error occurred accessing API: %s\n\n', api_err)
+        logging.exception('Error occurred accessing API: %s', api_err)
         sys.exit(7)
 
     return response
@@ -272,9 +272,9 @@ def time_csv_input(input_csv: Path) -> tuple:
                 break
 
     # If error occurs during file operation #
-    except (IOError, OSError) as file_err:
+    except OSError as file_err:
         # Lookup, display, and log IO error #
-        error_query(str(input_csv.resolve()), 'r', file_err)
+        error_query(str(input_csv), 'r', file_err)
 
     try:
         # Ensure input CSV data is int #
@@ -284,7 +284,7 @@ def time_csv_input(input_csv: Path) -> tuple:
     except ValueError as val_err:
         # Print error and log #
         print_err(f'Value: Error occurred retrieving CSV execution time values - {val_err}')
-        logging.exception('Value error occurred converting read csv time data: %s\n\n', val_err)
+        logging.exception('Value error occurred converting read csv time data: %s', val_err)
         sys.exit(6)
 
     return ret_month, ret_day, ret_hour
@@ -311,9 +311,9 @@ def time_csv_output(output_csv: Path):
             csv_writer.writerow(time_dict)
 
     # If error occurs during file operation #
-    except (IOError, OSError) as file_err:
+    except OSError as file_err:
         # Lookup, display, and log IO error #
-        error_query(str(output_csv.resolve()), 'w', file_err)
+        error_query(str(output_csv), 'w', file_err)
 
 
 class TimeTracker:

@@ -41,7 +41,7 @@ This program runs on Windows 10 and Debian-based Linux, written in Python 3.9 an
 
 > Examples:<br>
 >       &emsp;&emsp;- Windows: `set VTOTAL_API_KEY=<api_key_value>`<br>
->       &emsp;&emsp;- Linux: `$VTOTAL_API_KEY=<api_key_value>`
+>       &emsp;&emsp;- Linux: `export VTOTAL_API_KEY=<api_key_value>`
 
 
 - Confirm there is data in VTotalScanDock to be scanned

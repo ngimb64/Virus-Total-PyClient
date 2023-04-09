@@ -49,6 +49,13 @@ def main():
     # Get list of files to be scanned #
     files = get_files(input_dir)
 
+    print('''
+ _   ___                ______     __       __  ___       ________          __ 
+| | / (_)_____ _____   /_  __/__  / /____ _/ / / _ \\__ __/ ___/ (_)__ ___  / /_
+| |/ / / __/ // (_-<    / / / _ \\/ __/ _ `/ / / ___/ // / /__/ / / -_) _ \\/ __/
+|___/_/_/  \\_,_/___/   /_/  \\___/\\__/\\_,_/_/ /_/   \\_, /\\___/_/_/\\__/_//_/\\__/ 
+                                                  /___/
+''')
     print(f'Current number of daily Virus-Total API queries: {total_count}\n')
     print(f'Starting Virus-Total file check on file in {input_dir.name}')
     print(f'{(44 + len(input_dir.name)) * "*"}')
